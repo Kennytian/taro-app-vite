@@ -1,16 +1,16 @@
 import { defineConfig, type UserConfigExport } from '@tarojs/cli'
-import TsconfigPathsPlugin from 'tsconfig-paths-webpack-plugin'
-import devConfig from './dev'
-import prodConfig from './prod'
 import type { Plugin } from 'vite'
 import tailwindcss from 'tailwindcss'
 import { UnifiedViteWeappTailwindcssPlugin as uvtw } from 'weapp-tailwindcss/vite'
-console.log(process.env.TARO_ENV)
+
+import devConfig from './dev'
+import prodConfig from './prod'
+
 // https://taro-docs.jd.com/docs/next/config#defineconfig-辅助函数
 export default defineConfig<'vite'>(async (merge, { command, mode }) => {
   const baseConfig: UserConfigExport<'vite'> = {
-    projectName: 'taro-app-vite',
-    date: '2024-8-14',
+    projectName: 'myApp',
+    date: '2025-2-23',
     designWidth: 750,
     deviceRatio: {
       640: 2.34 / 2,
@@ -20,9 +20,7 @@ export default defineConfig<'vite'>(async (merge, { command, mode }) => {
     },
     sourceRoot: 'src',
     outputRoot: 'dist',
-    plugins: [
-
-    ],
+    plugins: [],
     defineConstants: {
     },
     copy: {
@@ -31,12 +29,12 @@ export default defineConfig<'vite'>(async (merge, { command, mode }) => {
       options: {
       }
     },
-
     framework: 'react',
     compiler: {
       type: 'vite',
       vitePlugins: [
         {
+          // 通过 vite 插件加载 postcss,
           name: 'postcss-config-loader-plugin',
           config(config) {
             // 加载 tailwindcss
@@ -46,22 +44,17 @@ export default defineConfig<'vite'>(async (merge, { command, mode }) => {
           },
         },
         uvtw({
+          // rem转rpx
           rem2rpx: true,
-          // 除了小程序这些，其他平台都 disabled
+          // 除了小程序这些，其他平台都 disable
           disabled: process.env.TARO_ENV === 'h5' || process.env.TARO_ENV === 'harmony' || process.env.TARO_ENV === 'rn',
+          // 由于 taro vite 默认会移除所有的 tailwindcss css 变量，所以一定要开启这个配置，进行css 变量的重新注入
           injectAdditionalCssVarScope: true,
         })
-      ] as Plugin[]
+      ] as Plugin[] // 从 vite 引入 type, 为了智能提示
     },
     mini: {
-      // https://taro-docs.jd.com/docs/config-detail#minipostcss
       postcss: {
-        // htmltransform: {
-        //   enable: true,
-        //   config: {
-        //     removeCursorStyle: false,
-        //   },
-        // },
         pxtransform: {
           enable: true,
           config: {
@@ -76,8 +69,6 @@ export default defineConfig<'vite'>(async (merge, { command, mode }) => {
           }
         }
       },
-
-
     },
     h5: {
       publicPath: '/',
@@ -111,6 +102,9 @@ export default defineConfig<'vite'>(async (merge, { command, mode }) => {
       }
     }
   }
+
+  process.env.BROWSERSLIST_ENV = process.env.NODE_ENV
+
   if (process.env.NODE_ENV === 'development') {
     // 本地开发构建配置（不混淆压缩）
     return merge({}, baseConfig, devConfig)
